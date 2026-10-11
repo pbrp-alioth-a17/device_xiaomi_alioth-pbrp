@@ -1,14 +1,14 @@
 # PitchBlack Recovery — POCO F3 / Redmi K40 / Mi 11X
 
-PBRP 4.0, Android 14 recovery userspace compatible with the tested Android 17
-Evolution X build. Supported codenames: **alioth, aliothin**.
+PBRP 4.0 port to Android 17 recovery userspace (LineageOS 24 platform base).
+The port is under build and runtime validation. Supported codenames: **alioth, aliothin**.
 
-Source and future releases: [pbrp-alioth/device_xiaomi_alioth-pbrp](https://github.com/pbrp-alioth/device_xiaomi_alioth-pbrp). No release assets have been published in this standalone repository.
+Source and future releases: [pbrp-alioth-a17/device_xiaomi_alioth-pbrp](https://github.com/pbrp-alioth-a17/device_xiaomi_alioth-pbrp). No release assets have been published in this standalone repository.
 
 ## Installation
 
 - Temporary launch: `fastboot boot recovery_boot.img`.
-- Permanent installation: Advanced → **Install Current Recovery** (tested),
+- Permanent installation: Advanced → **Install Current Recovery**,
   or **Install Recovery from Image**. The current option appears first.
 - `recovery.zip` installs the recovery ramdisk into **active Boot**, retaining
   its kernel/header. It requires neither decrypted storage nor a persistent
@@ -20,9 +20,9 @@ Do not flash the generated placeholder vendor_boot. Neither image nor ZIP
 formats userdata. Only the shared recovery domain remains permissive; infrastructure services enforce.
 Android policy and neverallow checks remain intact. It is not fully enforcing.
 
-## Verified and remaining checks
+## Historical verification and remaining checks
 
-Verified: UI/touch, brightness, timed haptics, RTC, 120 Hz selection, MTP,
+The previous Android 14 recovery implementation verified: UI/touch, brightness, timed haptics, RTC, 120 Hz selection, MTP,
 Boot backup, Android 17 password decryption, Virtual A/B ROM sideload,
 Magisk installation and current-recovery ramdisk installation.
 Data restore, other credential types and physical Mi 11X/Redmi K40 testing
@@ -30,10 +30,12 @@ remain unverified. Final fastboot USB driver compatibility is pending. GUI frame
 
 ## Rebuild
 
-Use a PBRP Android 14 checkout with this tree at `device/xiaomi/alioth`.
-Use the published `pbrp-a17` sibling branches listed in the [patch guide](patches/README.md). Alternatively, apply the pinned series once to clean upstream bases; never apply it again to the published branches.
+Use the Android 17 checkout at `~/pbrp-alioth-a17` with this tree at
+`device/xiaomi/alioth`. Android 14 build trees are not supported by this port.
+Use the [Android 17 source manifest](https://github.com/pbrp-alioth-a17/manifest). Its pinned projects contain the required changes; do not replay the old Android 14 patch series. See the [source guide](patches/README.md).
 The matching Android 17 kernel/DTB/DTBO are tracked in `prebuilt/`:
-`Image`, `dtbs/`, and `dtbo.img`; kernel sources are maintained separately.
+`Image`, `dtbs/`, and `dtbo.img`. The build wrapper regenerates them from
+`kernel/xiaomi/sm8250` using the checkout-provided compiler before building recovery.
 Run `device/xiaomi/alioth/tools/build-recovery.sh` (user build, Boot only).
 
 Package against the matching installed ROM ZIP to keep Keymaster OS/security
@@ -50,7 +52,7 @@ Development handoff: [Agents.md](Agents.md).
 
 ## Recovery runtime and current ROM metadata
 
-Recovery patches 0010–0012 keep the installed Android System outside recovery's
+The recovery runtime keeps the installed Android System outside recovery's
 /system and isolate bundled Magisk mounts. The Boot OS/security-patch header must
 match the installed ROM, or Keymaster can reject metadata-encryption keys.
 For incremental work without the ROM ZIP, retain OS metadata from a previously
@@ -66,9 +68,9 @@ future releases. This does not authorize access to ~/evo/out.
 
 ### Recovery-local installer signing
 
-After `lunch pb_alioth-user`, run `m -j4 signapk` in the recovery checkout
+After `lunch pb_alioth-cp2a-user`, run `m -j4 signapk` in the recovery checkout
 before `python3 device/xiaomi/alioth/tools/package-installer.py`. Signing uses
-recovery-local JDK 17, SignApk, JNI libraries and AOSP public test keys. The
+recovery-local JDK 21, SignApk, JNI libraries and AOSP public test keys. The
 packager fails before creating the ZIP if signing tools are missing. It never
 uses the ROM output directory. CRC, embedded image equality and both payload
 checksums are checked explicitly, including under optimized Python.

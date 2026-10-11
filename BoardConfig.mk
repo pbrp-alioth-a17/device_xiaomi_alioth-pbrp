@@ -2,16 +2,20 @@
 # Recovery adaptation of the current Alioth Android 17 board configuration.
 DEVICE_PATH := device/xiaomi/alioth
 TARGET_ARCH := arm64
-TARGET_ARCH_VARIANT := armv8-2a
+TARGET_ARCH_VARIANT := armv8-2a-dotprod
 TARGET_CPU_ABI := arm64-v8a
 TARGET_CPU_VARIANT := cortex-a76
 TARGET_2ND_ARCH := arm
 TARGET_2ND_ARCH_VARIANT := armv8-a
 TARGET_2ND_CPU_ABI := armeabi-v7a
-TARGET_2ND_CPU_VARIANT := generic
+TARGET_2ND_CPU_VARIANT := cortex-a76
 TARGET_BOARD_PLATFORM := kona
 TARGET_BOOTLOADER_BOARD_NAME := kona
 TARGET_NO_BOOTLOADER := true
+TARGET_KERNEL_SOURCE := kernel/xiaomi/sm8250
+TARGET_KERNEL_CONFIG := alioth_defconfig
+TARGET_KERNEL_CLANG_VERSION := r563880c
+TARGET_FORCE_PREBUILT_KERNEL := true
 TARGET_PREBUILT_KERNEL := $(DEVICE_PATH)/prebuilt/Image
 BOARD_PREBUILT_DTBIMAGE_DIR := $(DEVICE_PATH)/prebuilt/dtbs
 BOARD_PREBUILT_DTBOIMAGE := $(DEVICE_PATH)/prebuilt/dtbo.img
@@ -74,3 +78,13 @@ TARGET_RECOVERY_QCOM_RTC_FIX := true
 
 # Device labels and permissions for direct recovery hardware access.
 BOARD_VENDOR_SEPOLICY_DIRS += $(DEVICE_PATH)/sepolicy/recovery
+
+# Match the current Alioth gralloc handle ABI.
+$(call soong_config_set,qtidisplay,gralloc_handle_has_reserved_size,true)
+
+# Export recovery options on the Android 17 platform.
+include vendor/lineage/config/BoardConfigKernel.mk
+include vendor/pb/config/BoardConfigSoong.mk
+
+# PBRP supplies these scoped recovery build extensions.
+BUILD_BROKEN_PLUGIN_VALIDATION := soong-libaosprecovery_defaults soong-libguitwrp_defaults soong-libminuitwrp_defaults

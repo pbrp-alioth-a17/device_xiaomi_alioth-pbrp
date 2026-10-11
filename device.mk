@@ -22,7 +22,7 @@ TW_RECOVERY_ADDITIONAL_RELINK_LIBRARY_FILES += $(TARGET_OUT_SHARED_LIBRARIES)/li
 TW_RECOVERY_ADDITIONAL_RELINK_LIBRARY_FILES += $(TARGET_OUT_SHARED_LIBRARIES)/android.system.suspend-V1-ndk.so
 
 # Alioth UFS slot control, following the maintained OrangeFox device tree.
-PRODUCT_SOONG_NAMESPACES += device/xiaomi/alioth hardware/qcom/bootctrl hardware/qcom-caf/bootctrl
+PRODUCT_SOONG_NAMESPACES += device/xiaomi/alioth hardware/qcom-caf/bootctrl
 PRODUCT_PACKAGES += bootctrl.kona.recovery android.hardware.boot@1.1-impl-qti.recovery
 PRODUCT_PROPERTY_OVERRIDES += vendor.gatekeeper.disable_spu=true vendor.usb.use_ffs_mtp=1
 

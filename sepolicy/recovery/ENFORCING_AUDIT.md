@@ -1,4 +1,6 @@
-# Recovery policy validation — October 7, 2026
+# Historical Android 14 recovery policy validation — October 7, 2026
+
+These results describe the previous recovery image, not the Android 17 port.
 
 Global SELinux Enforcing; only the shared recovery domain remains permissive.
 init, ueventd, logd and adbd startup and functioning logcat were device-tested.
@@ -10,7 +12,7 @@ Measured rules cover init-to-logd rootfs transition, logd rootfs reads,
 init brightness/USB-mode writes, inherited keyring search and ueventd
 sys_nice. No blanket audit2allow rules or global permissive setting ship.
 
-Build/neverallow checks, exact permissive-domain check, patch replay, theme
+Build/neverallow checks, exact permissive-domain check, source integration, theme
 consistency, ZIP CRC and embedded-image hash checks passed. The exact packaged
 image passed password unlock, touch, brightness and haptics acceptance;
 ADB reported twrp.all.users.decrypted=true and global Enforcing.

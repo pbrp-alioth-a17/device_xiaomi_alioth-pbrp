@@ -54,6 +54,7 @@ extern "C" {
 
 #define TYPE_GUID_OFFSET            0
 #define TYPE_GUID_SIZE              16
+
 #define PTN_ENTRY_SIZE              128
 #define UNIQUE_GUID_OFFSET          16
 #define FIRST_LBA_OFFSET            32
@@ -78,6 +79,10 @@ extern "C" {
 #define AB_SLOT_INACTIVE                0
 #define AB_SLOT_A_SUFFIX                "_a"
 #define AB_SLOT_B_SUFFIX                "_b"
+#define PTN_TME_FW                      "tme_fw"
+#define PTN_TME_SEQ_PATCH               "tme_seq_patch"
+#define PTN_TME_CFG                     "tme_cfg"
+#define PTN_XBL_AC_CFG                  "xbl_ac_config"
 #define PTN_XBL                         "xbl"
 #define PTN_XBL_CFG                     "xbl_config"
 #define PTN_MULTIIMGOEM                 "multiimgoem"

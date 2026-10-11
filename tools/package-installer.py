@@ -5,7 +5,7 @@ import hashlib, subprocess, zipfile
 root = Path(__file__).resolve().parents[4]
 out = root / "out/release-candidate"
 host = root / "out/host/linux-x86"
-java = root / "prebuilts/jdk/jdk17/linux-x86/bin/java"
+java = root / "prebuilts/jdk/jdk21/linux-x86/bin/java"
 signing_jar = host / "framework/signapk.jar"
 signing_library = host / "lib64/libconscrypt_openjdk_jni.so"
 for required in (java, signing_jar, signing_library):

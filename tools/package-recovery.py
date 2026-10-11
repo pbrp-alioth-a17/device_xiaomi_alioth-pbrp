@@ -52,6 +52,31 @@ if args.security_patch:
     if not args.metadata_boot or not re.fullmatch(r"20[0-9]{2}-(0[1-9]|1[0-2])", args.security_patch):
         raise SystemExit("--security-patch requires --metadata-boot and valid YYYY-MM")
     patch_level = args.security_patch
+# Fail packaging if a staged executable or library lacks an ABI-matching provider.
+# Inspect staged ELF files using the checkout compiler tools, rather than install aliases.
+import re
+readelf = root / "prebuilts/clang/host/linux-x86/clang-r596125/bin/llvm-readelf"
+elf_dependencies = []
+providers = set()
+for candidate in staging.rglob("*"):
+    if candidate.is_symlink() or not candidate.is_file():
+        continue
+    with candidate.open("rb") as source:
+        header = source.read(20)
+    if header[:4] != b"\x7fELF":
+        continue
+    abi = (header[4], header[18:20])
+    dynamic = subprocess.check_output([str(readelf), "-d", str(candidate)], text=True)
+    providers.add((abi, candidate.name))
+    for soname in re.findall(r"\(SONAME\).*?\[(.*?)\]", dynamic):
+        providers.add((abi, soname))
+    elf_dependencies.append((candidate, abi, re.findall(r"\(NEEDED\).*?\[(.*?)\]", dynamic)))
+missing = [(str(candidate.relative_to(staging)), dependency)
+           for candidate, abi, dependencies in elf_dependencies
+           for dependency in dependencies if (abi, dependency) not in providers]
+if missing:
+    raise SystemExit(f"Missing recovery runtime library providers: {missing}")
+
 policy = staging / "sepolicy"
 domains = set(subprocess.check_output([str(host / "sepolicy-analyze"), str(policy), "permissive"], text=True).split())
 expected = {"recovery"}

@@ -3,7 +3,7 @@
 Device policy is compiled through BOARD_VENDOR_SEPOLICY_DIRS. Hardware
 permissions are enclosed in recovery_only: they grant nothing to Android HALs.
 
-Validated labels on Alioth:
+Labels verified on the historical Android 14 recovery:
 - /dev/dri/card0: vendor_alioth_recovery_drm_device (DRM UI)
 - panel0-backlight/brightness: vendor_alioth_recovery_backlight
 - AW8697 activate, activate_mode, duration: vendor_alioth_recovery_haptics
@@ -12,10 +12,10 @@ The physical sysfs paths were measured on kernel ac2a025a05e6. Do not grant
 write access to all sysfs or copy ROM SELinux policy wholesale into recovery.
 Gain/calibration/register interfaces are deliberately not exposed here.
 
-Build and neverallow checks passed. In a temporary globally permissive audit,
+Historical Android 14 build and neverallow checks passed. In a temporary globally permissive audit,
 the labels applied and previous recovery DRM/backlight/RTC startup denials
 were absent. Physical menu navigation, brightness and haptics passed user testing
-with patch 0008. Password decryption, menus, brightness and haptics passed
+with the device policy implementation. Password decryption, menus, brightness and haptics passed
 on the October 7 packaged image with global SELinux Enforcing. Shell diagnostic denials are not production
 requirements.
 
@@ -24,7 +24,8 @@ Only the shared recovery domain remains permissive. General property
 enumeration, co-located services, APEX/filesystem operations and installation
 need a separate full enforcing-policy audit. Do not claim they were solved.
 
-Infrastructure enforcement is recorded in ENFORCING_AUDIT.md. The release
+Historical infrastructure enforcement is recorded in ENFORCING_AUDIT.md.
+The Android 17 port requires its own exact-image runtime verification. The release
 packager accepts only recovery as permissive; widening this set requires
 explicit review. USB mode labeling is restricted to Alioth's physical
 /sys/devices/platform/soc/a600000.ssusb/mode node.

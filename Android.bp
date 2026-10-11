@@ -1,6 +1,5 @@
 soong_namespace {
     imports: [
-        "hardware/qcom/bootctrl",
         "hardware/qcom-caf/bootctrl",
         "vendor/qcom/opensource/commonsys-intf/display",
     ],
