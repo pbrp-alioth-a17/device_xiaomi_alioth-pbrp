@@ -124,10 +124,42 @@ No temporary test harnesses are committed or installed.
 
 Artifacts in `out/release-candidate/`:
 
-- Boot image: 117092352 bytes; SHA-256 `aaef9f77fab5685bfe9a36086e4971babffbce2c7b767e2ac79026de51e599cb`.
-- Installer ZIP: 87025090 bytes; SHA-256 `a2b0d5967331d8b9874f68ddbbc789bd4d2d9efed715f5c5e3f56ea3e36e7baa`.
+- Boot image: 117092352 bytes; SHA-256 `d97e1aa91d55822c6a58ae4e439253683ad04388099aa821efc1f4807b9589f3`.
+- Installer ZIP: 87031532 bytes; SHA-256 `99811d09e2abe4fee0ae8b974d3bfb8a8c8f7e86f7d4360d35d3413d2ee4baec`.
 
 Physical ADB authorization/USB, MTP transfers, existing-data decryption and
 visual inspection of both palettes remain pending on this exact image.
 These offline checks do not certify a production release or full enforcing
 operation: the shared recovery domain remains permissive.
+## ROM device-tree backend alignment
+
+The recovery audit uses ROM Alioth commit
+[c1debf6](https://github.com/PocoF3Releases/device_xiaomi_alioth/commit/c1debf6b85f71d640fa18beea6e9b3e13c79c8c2)
+and sm8250-common commit
+[38b93bc](https://github.com/PocoF3Releases/device_xiaomi_sm8250-common/commit/38b93bc3b49c3a56302eac6bfcc7c3b12730ee30).
+The recovery kernel already matches the ROM kernel at
+[a67e83add1fa](https://github.com/pbrp-alioth-a17/kernel_xiaomi_sm8250/commit/a67e83add1fa9398814db8451f91347c7c2d09ed).
+Its wrapped-key FBE v2, metadata key directory and inline crypto flags match
+the ROM A/B fstab. Recovery retains its own safe partition exposure.
+
+ROM RTC and PM8150L LED labels are adapted for direct recovery access.
+The original authors are credited in the policy commit. Android-only camera,
+radio, audio, power, vibrator and DRM HAL declarations are removed from the
+recovery VINTF overlay. Boot, health, Keymaster, Gatekeeper and HIDL/keystore
+infrastructure remain declared. Recovery uses direct haptics, LEDs, touch and
+DRM panel access instead of importing unrelated framework HAL permissions.
+
+Packaging prunes stale overlay-owned VINTF fragments, runs the native Android
+17 VINTF assembler, and rejects missing literal init imports or service tools.
+The unused generated crypto-service imports are removed; their actual service
+definitions remain in Alioth init files. Existing Android 17 policy supplies
+ADB, fastbootd, ueventd, logd, storage, USB and snapshot infrastructure rules;
+device-specific policy supplies DRM, backlight, haptics, RTC and USB-mode access.
+
+This is source/build coverage of the packaged backend. Hardware-backed key
+access, actual SELinux denials and physical service behavior still require the
+exact-image phone checks. No claim of full enforcing operation is made.
+
+The aligned candidate passes the recovery rebuild, neverallow and policy type
+checks, both native VINTF assemblies, all 20 staged init checks and the full
+packaging/installer validation. Artifact hashes above identify this revision.
