@@ -22,10 +22,11 @@ if [ -n "$mounted_source" ]; then
     for directory in /vendor/firmware_mnt /vendor/firmware_mnt/image; do
         [ "$(stat -c '%u:%g:%a' "$directory")" = "1000:1000:550" ] || fail "unexpected firmware directory permissions"
     done
-    [ "$(stat -c '%u:%g:%a' /vendor/firmware_mnt/image/keymaster.mdt)" = "1000:1000:440" ] || fail "unexpected firmware file permissions"
     awk '$2 == "/vendor/firmware_mnt" && $3 == "vfat" && $4 ~ /(^|,)ro(,|$)/ {found=1} END {exit !found}' /proc/mounts || fail "firmware mount is not read-only vfat"
 else
     mount -t vfat -o ro,uid=1000,gid=1000,dmask=227,fmask=337 "$modem" /vendor/firmware_mnt || fail "cannot mount firmware"
 fi
-[ -r /vendor/firmware_mnt/image/keymaster.mdt ] || fail "keymaster firmware unavailable"
+# Alioth stores Keymaster in its separate firmware partition; it is not an
+# MDT in modem firmware. QSEECOM may use other trustlets from this directory.
+[ -d /vendor/firmware_mnt/image ] || fail "modem firmware image directory unavailable"
 setprop alioth.crypto.ready 1

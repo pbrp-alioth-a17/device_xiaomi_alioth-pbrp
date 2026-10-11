@@ -8,6 +8,8 @@ PRODUCT_PROPERTY_OVERRIDES += ro.virtual_ab.enabled=true
 # Recovery has no Android framework authorization dialog. The recovery-only
 # switch is honored by adbd only on an unlocked bootloader or a debug build.
 PRODUCT_PROPERTY_OVERRIDES += ro.adb.secure.recovery=false
+# Legacy Qualcomm crypto HALs use the staged recovery hwservicemanager.
+PRODUCT_PROPERTY_OVERRIDES += ro.recovery.hidl_binder=true
 PRODUCT_BUILD_SUPER_PARTITION := false
 # Qualcomm 4.19 crypto blobs require ION ioctls; Android 17 defaults to a stub.
 $(call soong_config_set_bool,libion,legacy_impl,true)
