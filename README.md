@@ -77,8 +77,9 @@ checksums are checked explicitly, including under optimized Python.
 
 ## Android 17 offline feature audit
 
-The current candidate is not a production release. Its exact image still needs
-phone verification; the Android 14 results above do not validate this port.
+The current candidate is not a production release. The exact image passed the
+ADB, keystore startup and existing-data MTP checks below; destructive operations
+and the remaining feature checks are not certified by those results.
 
 | Area | Current source/build evidence | Remaining runtime check |
 | --- | --- | --- |
@@ -105,7 +106,7 @@ build host, checks the full generated theme XML for stale content, and enforces
 the configured Boot partition size before publishing a candidate. Disposable
 host fixtures cover symlink escapes/loops and stale theme rejection; no test
 harnesses are installed in recovery or added to its source history.
-## Final offline candidate — 2026-10-11
+## Final candidate — 2026-10-12
 
 The user-build recovery and Android 17 policy targets build successfully.
 The existing ADB host suite passes 124 tests; one vsock test is excluded and
@@ -125,11 +126,12 @@ No temporary test harnesses are committed or installed.
 
 Artifacts in `out/release-candidate/`:
 
-- Boot image: 117813248 bytes; SHA-256 `a80f0c6b7d14091b92eef9895c5c3b866f56840985c329925bbbf080f9286866`.
-- Installer ZIP: 87752320 bytes; SHA-256 `46cc868bef02657bafd25e5e418be4e9bda8e7c8dc6d1660c13a7f8770ad8aef`.
+- Boot image: 117817344 bytes; SHA-256 `0cfe1dca813ecc5f8fe5b9ac2078d7d5d706c09fc97222ea047c88d2fedbdd99`.
+- Installer ZIP: 87751849 bytes; SHA-256 `dea571b5c19dd73e68c57b67e4d6405ce8532a974cb18f44d997b593e873b08c`.
 
-Physical ADB authorization/USB, MTP transfers, existing-data decryption and
-visual inspection of both palettes remain pending on this exact image.
+Physical ADB authorization/USB, default-credential decryption and readable MTP
+folder names pass on this exact image. MTP transfer round-trips, other credential
+types and visual inspection of both palettes remain pending.
 These offline checks do not certify a production release or full enforcing
 operation: the shared recovery domain remains permissive.
 ## ROM device-tree backend alignment
@@ -182,24 +184,32 @@ hidden files and empty directories. Packaging rejects absent or non-executable
 ADB, fastbootd, snapshot, crypto, backup, filesystem and file-manager tools.
 No test fixtures are committed or installed.
 
-## Android 17 crypto startup follow-up
+## Android 17 crypto startup verification — 2026-10-12
 
-The phone exposed a missing bootstrap ELF interpreter for hwservicemanager.
-Staging the native linker aliases restored its startup in the next temporary
-boot, with global SELinux enforcing. Decryption still failed: QSEECOM reported
-ION allocation and missing keymaster firmware errors. This is not a successful
-decryption result.
+The initial boot failures were caused by legacy HIDL passthrough lookup,
+missing keystore2 AIDL v6 registration, stale incremental runtime libraries,
+and an encryption-status helper unmounting data after successful FBE unlock.
+That unmount discarded the filesystem keyring and exposed encrypted filenames
+through MTP. Status and data-media helpers now preserve an existing data mount.
+The removed FDE stub cannot report a successful decryption without doing it.
 
-The offline correction selects the platform's legacy ION implementation,
-matching the ROM's Qualcomm 4.19 configuration. It prepares active-slot modem
-firmware as read-only vfat with system-readable permissions before qseecomd,
-rejects unexpected existing mounts, and bounds prerequisite waits. Failed
-installed-OS property preparation no longer publishes crypto readiness.
-Packaging checks ELF interpreters and each runtime dependency closure, including
-symbol versions, and refreshes native ION outputs to avoid stale incremental
-relinking. Existing credentials and userdata are not modified by preparation.
+Recovery opts into binder-backed HIDL lookup with bounded service-manager and
+Keymaster registration waits. The latter removes the observed early keystore2
+abort while Qualcomm services start. Packaging refreshes native HIDL and
+km_compat libraries before checking their dependency closure. Firmware remains
+read-only; Alioth does not require a modem keymaster.mdt file.
 
-Hardware-backed key service startup and existing-data decryption require another
-phone check. Device operations are paused at the user's request. The existing
-shared recovery service domain remains permissive; global enforcing alone does
-not prove each legacy crypto service runs in a dedicated enforcing domain.
+The exact Boot image listed above was temporarily booted on slot A with the
+4.19 sm8250 kernel. Windows ADB authorized successfully as uid 2000 with
+ro.secure=1 and ro.debuggable=0. Global SELinux was enforcing; only the shared
+recovery domain is permissive. Keystore2 remained running, the crash buffer
+was empty, and MTP exposed readable Download and DCIM names among 23 storage
+entries. No user files were read for this listing, and no credentials, keys or
+userdata were rewritten or formatted. Slot B's system/vendor mappings did not
+contain valid filesystem headers; this is separate from the recovered FBE
+key-lifetime bug. No slot metadata or logical partition contents were modified.
+
+Compilation, Android 17 neverallow/type checks and image/ZIP packaging pass.
+5.15 kernels, other credential types, full UI/theme inspection, OTA installation
+and destructive restore operations remain unverified. The signed ZIP was
+validated offline, not installed during this final check.
