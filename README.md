@@ -87,7 +87,8 @@ phone verification; the Android 14 results above do not validate this port.
 | Flashlight | Torch discovery requires a matching brightness node; directory handles close. Failed writes report errors and activation rolls back | Check Alioth torch on/off and intensity |
 | Brightness and hardware writes | Shared helpers check short writes and close/flush failures; disposable host ENOSPC checks passed | Verify panel brightness and haptic controls |
 | FBE and metadata encryption | Generated kernel enables filesystem encryption and inline crypto; native Android 17 fscrypt paths and staged crypto dependencies compile | Existing credential decryption and storage access, without rewriting keys |
-| Virtual A/B | Generated kernel enables dm-user and dm-snapshot; native snapshot libraries and updater dependencies are packaged | Sideload and snapshot lifecycle against a compatible OTA |
+| Virtual A/B | Generated kernel enables dm-user and dm-snapshot; native snapshot libraries, the on-demand snapuserd daemon and updater dependencies are packaged | Sideload and snapshot lifecycle against a compatible OTA |
+| File manager | Upstream PBRP Info-ZIP is packaged with ZIP64 and UTF-8 support; recursive host archive round-trips preserve names and contents | Create and extract an archive on device storage |
 | USB | Generated kernel enables USB configfs/FunctionFS; staged init scripts and executable dependencies pass packaging checks | ADB authorization, MTP and fastbootd |
 | Backup and recovery installation | Approved partition exposure and active-Boot-only ramdisk installation remain intact | Non-destructive Boot backup; destructive operations remain unverified |
 | SELinux | Android 17 policy compilation and neverallow/type tests pass; only the shared recovery domain is permissive | Audit denials from the exact booted candidate |
@@ -115,7 +116,7 @@ known vectors each; this does not exercise ARM NEON or Qualcomm hardware keys.
 
 MTP uses FunctionFS descriptors and waits for MTP readiness, and for ADB
 readiness when combined. Host checks cover all 16 readiness combinations and
-real-child shutdown/reaping without consuming unrelated children. All 20
+real-child shutdown/reaping without consuming unrelated children. All 21
 packaged init scripts pass Android 17 host_init_verifier. Both original and
 Material palette loading, saved-selection reload and external-palette isolation
 pass source-based host checks. Packaging validates ELF dependencies, generated
@@ -124,8 +125,8 @@ No temporary test harnesses are committed or installed.
 
 Artifacts in `out/release-candidate/`:
 
-- Boot image: 117092352 bytes; SHA-256 `d97e1aa91d55822c6a58ae4e439253683ad04388099aa821efc1f4807b9589f3`.
-- Installer ZIP: 87031532 bytes; SHA-256 `99811d09e2abe4fee0ae8b974d3bfb8a8c8f7e86f7d4360d35d3413d2ee4baec`.
+- Boot image: 117805056 bytes; SHA-256 `2db0368b5326001f8ef5290fdf705767afcb6543f6f3df0f99135f61d6c44d55`.
+- Installer ZIP: 87745702 bytes; SHA-256 `f728f68ebb0fd3c8521489497402b5f51bef0e1c81e0140be88c4ed254c95ccf`.
 
 Physical ADB authorization/USB, MTP transfers, existing-data decryption and
 visual inspection of both palettes remain pending on this exact image.
@@ -161,5 +162,22 @@ access, actual SELinux denials and physical service behavior still require the
 exact-image phone checks. No claim of full enforcing operation is made.
 
 The aligned candidate passes the recovery rebuild, neverallow and policy type
-checks, both native VINTF assemblies, all 20 staged init checks and the full
+checks, both native VINTF assemblies, all 21 staged init checks and the full
 packaging/installer validation. Artifact hashes above identify this revision.
+
+## Final backend dependency audit
+
+The ramdisk includes native Android 17 `snapuserd` and its disabled, on-demand
+service definition. Its rootfs transition retains the enforcing `snapuserd`
+domain. Alioth uses dm-user snapshots: upstream kernel guards disable io_uring
+and ublk on this 4.19 kernel, without requiring speculative kernel backports.
+Actual OTA mapping and merge remain phone checks.
+
+The file manager ZIP command comes from
+[the upstream-preserving Info-ZIP fork](https://github.com/pbrp-alioth-a17/android_external_zip).
+Its Android 17 build uses the native recovery linker, ZIP64 and UTF-8 support.
+The UTF-8 locale falls back from `C.UTF-8` to `en_US.UTF-8` for host compatibility.
+Disposable archive checks cover recursive directories, spaces, UTF-8 names,
+hidden files and empty directories. Packaging rejects absent or non-executable
+ADB, fastbootd, snapshot, crypto, backup, filesystem and file-manager tools.
+No test fixtures are committed or installed.
