@@ -117,6 +117,18 @@ if missing_imports:
     raise SystemExit(f"Missing recovery init imports: {missing_imports}")
 if missing_services:
     raise SystemExit(f"Missing or non-executable recovery service tools: {missing_services}")
+# Tools required by the approved recovery backend, beyond ZIP installation.
+backend_tools = (
+    "adbd fastbootd snapuserd update_engine_sideload keystore2 qseecomd "
+    "android.hardware.keymaster@4.0-service-qti "
+    "android.hardware.gatekeeper@1.0-service-qti "
+    "magiskboot pigz zip bu make_f2fs fsck.f2fs e2fsck mke2fs resize2fs logcat dmesg"
+).split()
+for tool in backend_tools:
+    binary = ramdisk_target(staging / "system/bin" / tool)
+    if not binary.is_file() or not binary.stat().st_mode & 0o111:
+        raise SystemExit(f"Missing or non-executable recovery backend tool: {tool}")
+
 # These applets are required by the approved Boot ramdisk installer.
 installer_tools = "getprop unzip sha256sum dd blockdev head wc cut mktemp sync chmod mkdir cp cmp rm id sh".split()
 missing_tools = []
