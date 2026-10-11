@@ -193,6 +193,10 @@ for libdir in ("lib", "lib64"):
         if not native.is_file():
             raise SystemExit(f"Missing native libion output: {native}")
         shutil.copy2(native, ramdisk_target(staged))
+# The relinked Keystore compatibility library also needs its latest native
+# output; incremental relinking does not track its source changes reliably.
+shutil.copy2(product / "system/lib64/libkm_compat.so",
+             ramdisk_target(staging / "system/lib64/libkm_compat.so"))
 # The legacy relinker previously replaced the recovery variant with the
 # system libvintf. Refresh its exact native recovery build output as well.
 vintf_outputs = list((root / "out/soong/.intermediates/system/libvintf/libvintf").glob(
@@ -200,6 +204,16 @@ vintf_outputs = list((root / "out/soong/.intermediates/system/libvintf/libvintf"
 if len(vintf_outputs) != 1:
     raise SystemExit("Expected one linked arm64 recovery libvintf output; rebuild libvintf.recovery")
 shutil.copy2(vintf_outputs[0], ramdisk_target(staging / "system/lib64/libvintf.so"))
+# The recovery HIDL variant honors the target's binder-backed legacy HAL option.
+for libdir, arch in (("lib", "arm"), ("lib64", "arm64")):
+    destination = ramdisk_target(staging / "system" / libdir / "libhidlbase.so")
+    if not destination.exists():
+        continue
+    outputs = list((root / "out/soong/.intermediates/system/libhidl/libhidlbase").glob(
+        f"android_recovery_{arch}_*_shared/libhidlbase.so"))
+    if len(outputs) != 1:
+        raise SystemExit(f"Expected one native recovery {arch} libhidlbase output")
+    shutil.copy2(outputs[0], destination)
 # Native bootstrap binaries, including hwservicemanager, retain this ELF path.
 # Recovery uses the same staged Bionic linker before any installed-OS mounts.
 bootstrap = ramdisk_target(staging / "system/bin/bootstrap")
