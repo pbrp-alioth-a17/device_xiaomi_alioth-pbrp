@@ -74,3 +74,60 @@ recovery-local JDK 21, SignApk, JNI libraries and AOSP public test keys. The
 packager fails before creating the ZIP if signing tools are missing. It never
 uses the ROM output directory. CRC, embedded image equality and both payload
 checksums are checked explicitly, including under optimized Python.
+
+## Android 17 offline feature audit
+
+The current candidate is not a production release. Its exact image still needs
+phone verification; the Android 14 results above do not validate this port.
+
+| Area | Current source/build evidence | Remaining runtime check |
+| --- | --- | --- |
+| Navigation and tools | All 50 bundled theme action names resolve to registered handlers | Touch every supported menu; check labels and spacing |
+| Appearance | Original PBRP remains the default; Customizations offers Android 17 Material colors. The selection is saved and reloaded after settings load; external palettes retain their colors | Inspect both palettes, reboot persistence and contrast on bitmap controls |
+| Flashlight | Torch discovery requires a matching brightness node; directory handles close. Failed writes report errors and activation rolls back | Check Alioth torch on/off and intensity |
+| Brightness and hardware writes | Shared helpers check short writes and close/flush failures; disposable host ENOSPC checks passed | Verify panel brightness and haptic controls |
+| FBE and metadata encryption | Generated kernel enables filesystem encryption and inline crypto; native Android 17 fscrypt paths and staged crypto dependencies compile | Existing credential decryption and storage access, without rewriting keys |
+| Virtual A/B | Generated kernel enables dm-user and dm-snapshot; native snapshot libraries and updater dependencies are packaged | Sideload and snapshot lifecycle against a compatible OTA |
+| USB | Generated kernel enables USB configfs/FunctionFS; staged init scripts and executable dependencies pass packaging checks | ADB authorization, MTP and fastbootd |
+| Backup and recovery installation | Approved partition exposure and active-Boot-only ramdisk installation remain intact | Non-destructive Boot backup; destructive operations remain unverified |
+| SELinux | Android 17 policy compilation and neverallow/type tests pass; only the shared recovery domain is permissive | Audit denials from the exact booted candidate |
+
+The additional appearance option follows Material color roles, not Android's
+framework UI toolkit: PBRP still uses its native XML/bitmap interface. It does not
+claim Android Settings components, dynamic wallpaper colors or blur support.
+Reference: [Material color roles](https://m3.material.io/styles/color/roles),
+[AOSP FBE](https://source.android.com/docs/security/features/encryption/file-based),
+[AOSP Virtual A/B](https://source.android.com/docs/core/ota/virtual_ab).
+
+The packaging review additionally rejects ramdisk symlink traversal into the
+build host, checks the full generated theme XML for stale content, and enforces
+the configured Boot partition size before publishing a candidate. Disposable
+host fixtures cover symlink escapes/loops and stale theme rejection; no test
+harnesses are installed in recovery or added to its source history.
+## Final offline candidate — 2026-10-11
+
+The user-build recovery and Android 17 policy targets build successfully.
+The existing ADB host suite passes 124 tests; one vsock test is excluded and
+one is skipped because the WSL host lacks that transport. Six extracted ADB
+authorization-gate cases preserve authentication on locked user builds.
+Both recovery scrypt reference and SSE implementations match three independent
+known vectors each; this does not exercise ARM NEON or Qualcomm hardware keys.
+
+MTP uses FunctionFS descriptors and waits for MTP readiness, and for ADB
+readiness when combined. Host checks cover all 16 readiness combinations and
+real-child shutdown/reaping without consuming unrelated children. All 20
+packaged init scripts pass Android 17 host_init_verifier. Both original and
+Material palette loading, saved-selection reload and external-palette isolation
+pass source-based host checks. Packaging validates ELF dependencies, generated
+theme freshness, ramdisk paths, policy boundaries and installer payloads.
+No temporary test harnesses are committed or installed.
+
+Artifacts in `out/release-candidate/`:
+
+- Boot image: 117092352 bytes; SHA-256 `aaef9f77fab5685bfe9a36086e4971babffbce2c7b767e2ac79026de51e599cb`.
+- Installer ZIP: 87025090 bytes; SHA-256 `a2b0d5967331d8b9874f68ddbbc789bd4d2d9efed715f5c5e3f56ea3e36e7baa`.
+
+Physical ADB authorization/USB, MTP transfers, existing-data decryption and
+visual inspection of both palettes remain pending on this exact image.
+These offline checks do not certify a production release or full enforcing
+operation: the shared recovery domain remains permissive.

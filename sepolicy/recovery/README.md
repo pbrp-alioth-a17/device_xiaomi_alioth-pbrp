@@ -29,3 +29,23 @@ The Android 17 port requires its own exact-image runtime verification. The relea
 packager accepts only recovery as permissive; widening this set requires
 explicit review. USB mode labeling is restricted to Alioth's physical
 /sys/devices/platform/soc/a600000.ssusb/mode node.
+
+## Android 17 offline validation
+
+The current port uses the Android 17 / LineageOS 24 platform policy, including
+versioned recovery genfs labels. Recovery policy compilation, neverallow checks,
+`sepolicy_test`, `sepolicy_dev_type_test`, and staged file/property/Binder/HIDL
+context validation pass. The redundant PBRP adbd `setcurrent` rule is removed;
+the native platform rule and recovery shell transition remain available.
+
+The production source restores normal init SELinux enforcement. The compiled
+policy permits only the approved shared `recovery` domain to be permissive.
+The earlier globally permissive image was diagnostic and is not the production
+candidate. Full enforcement of the shared recovery domain is not claimed.
+
+Native init verification passes for all 20 staged init scripts after removing
+the obsolete `install_keyring` action. Fscrypt v2 key installation remains in
+recovery vold through filesystem ioctls. Executable/service dependency audits
+cover the decryption launcher, HIDL manager, charger and lpdump runtime closure.
+These are offline results; decryption, USB authorization and enforcing-image
+hardware behavior still require exact-image phone verification before release.

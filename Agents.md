@@ -23,7 +23,8 @@
 ## Verification boundary
 
 The previous Android 14 recovery's device results are historical. This Android 17
-port is still under build and runtime validation; do not report it ready until
+port has passed offline build, host ADB, crypto-vector, MTP lifecycle and
+packaging checks recorded in README.md; do not report it ready until
 its exact packaged image passes the relevant phone checks.
 
 Use Windows `D:/platform-tools` for the connected phone. Copy an image to a
