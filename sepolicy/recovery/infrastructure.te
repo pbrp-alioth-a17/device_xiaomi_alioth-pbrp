@@ -1,6 +1,9 @@
 # Device manager scheduling; measured on the Alioth recovery kernel.
 recovery_only(`
   # Recovery executables remain rootfs-labeled, as in AOSP recovery transitions.
+  # Native snapshot daemon keeps its enforcing domain in the rootfs ramdisk.
+  domain_trans(init, rootfs, snapuserd)
+  r_dir_file(snapuserd, rootfs)
   domain_trans(init, rootfs, logd)
   r_dir_file(logd, rootfs)
   allow init vendor_alioth_recovery_backlight:file w_file_perms;

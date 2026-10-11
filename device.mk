@@ -32,3 +32,6 @@ PRODUCT_PROPERTY_OVERRIDES += vendor.gatekeeper.disable_spu=true vendor.usb.use_
 # Device-specific GUI capabilities; never applies to other PBRP targets.
 PRODUCT_PROPERTY_OVERRIDES += ro.pbrp.alioth_safe_ui=1
 PRODUCT_PROPERTY_OVERRIDES += ro.pbrp.display_refresh_rate=120
+
+# Required for compressed/userspace Virtual A/B snapshot mappings.
+PRODUCT_PACKAGES += snapuserd.recovery
