@@ -126,8 +126,8 @@ No temporary test harnesses are committed or installed.
 
 Artifacts in `out/release-candidate/`:
 
-- Boot image: 117817344 bytes; SHA-256 `0cfe1dca813ecc5f8fe5b9ac2078d7d5d706c09fc97222ea047c88d2fedbdd99`.
-- Installer ZIP: 87751849 bytes; SHA-256 `dea571b5c19dd73e68c57b67e4d6405ce8532a974cb18f44d997b593e873b08c`.
+- Boot image: 117993472 bytes; SHA-256 `56fbff2a1736c2a0e8dcde0d1c1d3ef23358fc8c5ee331707bce390bcfdc5f20`.
+- Installer ZIP: 87931918 bytes; SHA-256 `373180863fd246b611bf00ba98fbc08381ca85a91ab162f32e836c00cc2964a4`.
 
 Physical ADB authorization/USB, default-credential decryption and readable MTP
 folder names pass on this exact image. MTP transfer round-trips, other credential
@@ -199,7 +199,7 @@ abort while Qualcomm services start. Packaging refreshes native HIDL and
 km_compat libraries before checking their dependency closure. Firmware remains
 read-only; Alioth does not require a modem keymaster.mdt file.
 
-The exact Boot image listed above was temporarily booted on slot A with the
+The earlier crypto-fix Boot image (`0cfe1dca813ecc5f8fe5b9ac2078d7d5d706c09fc97222ea047c88d2fedbdd99`) was temporarily booted on slot A with the
 4.19 sm8250 kernel. Windows ADB authorized successfully as uid 2000 with
 ro.secure=1 and ro.debuggable=0. Global SELinux was enforcing; only the shared
 recovery domain is permissive. Keystore2 remained running, the crash buffer
@@ -210,6 +210,27 @@ contain valid filesystem headers; this is separate from the recovered FBE
 key-lifetime bug. No slot metadata or logical partition contents were modified.
 
 Compilation, Android 17 neverallow/type checks and image/ZIP packaging pass.
-5.15 kernels, other credential types, full UI/theme inspection, OTA installation
+5.15 kernels, other credential types, exhaustive UI/theme inspection, OTA installation
 and destructive restore operations remain unverified. The signed ZIP was
 validated offline, not installed during this final check.
+
+
+## Settings-aligned Material theme — 2026-10-12
+
+The optional Material theme follows the local EvolutionX Android 17 Settings
+and SettingsLib expressive preference implementation: grouped surfaces with
+20dp outer corners, 16sp titles, 14sp summaries and 16dp inner padding, scaled
+to the recovery canvas. Its home page replaces the original tile grid with
+three groups of rows. Recovery operations, console, flashlight and terminal
+remain accessible. PBRP Original keeps its existing home layout; external ZIP
+themes retain their own resources.
+
+Phone screenshots verified the Material home and General Settings preference
+bounds, typography, padding and scrollbar. Earlier phone checks covered the
+selector, Advanced, Backup and Reboot layouts in both built-in themes. These
+UI checks used the temporary diagnostic recovery with the final native binary
+and RAM-staged theme resources. The exact packaged secure image listed above
+was then temporarily booted: uid 2000 ADB, ro.secure=1, ro.debuggable=0,
+Enforcing, running keystore2, mtp,adb and an empty crash buffer. The pre-test
+theme preference was restored, and no partition was flashed. This does not
+establish exhaustive page/localization coverage or destructive operation tests.
