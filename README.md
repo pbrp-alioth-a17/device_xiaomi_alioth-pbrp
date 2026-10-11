@@ -125,8 +125,8 @@ No temporary test harnesses are committed or installed.
 
 Artifacts in `out/release-candidate/`:
 
-- Boot image: 117805056 bytes; SHA-256 `2db0368b5326001f8ef5290fdf705767afcb6543f6f3df0f99135f61d6c44d55`.
-- Installer ZIP: 87745702 bytes; SHA-256 `f728f68ebb0fd3c8521489497402b5f51bef0e1c81e0140be88c4ed254c95ccf`.
+- Boot image: 117813248 bytes; SHA-256 `a80f0c6b7d14091b92eef9895c5c3b866f56840985c329925bbbf080f9286866`.
+- Installer ZIP: 87752320 bytes; SHA-256 `46cc868bef02657bafd25e5e418be4e9bda8e7c8dc6d1660c13a7f8770ad8aef`.
 
 Physical ADB authorization/USB, MTP transfers, existing-data decryption and
 visual inspection of both palettes remain pending on this exact image.
@@ -181,3 +181,25 @@ Disposable archive checks cover recursive directories, spaces, UTF-8 names,
 hidden files and empty directories. Packaging rejects absent or non-executable
 ADB, fastbootd, snapshot, crypto, backup, filesystem and file-manager tools.
 No test fixtures are committed or installed.
+
+## Android 17 crypto startup follow-up
+
+The phone exposed a missing bootstrap ELF interpreter for hwservicemanager.
+Staging the native linker aliases restored its startup in the next temporary
+boot, with global SELinux enforcing. Decryption still failed: QSEECOM reported
+ION allocation and missing keymaster firmware errors. This is not a successful
+decryption result.
+
+The offline correction selects the platform's legacy ION implementation,
+matching the ROM's Qualcomm 4.19 configuration. It prepares active-slot modem
+firmware as read-only vfat with system-readable permissions before qseecomd,
+rejects unexpected existing mounts, and bounds prerequisite waits. Failed
+installed-OS property preparation no longer publishes crypto readiness.
+Packaging checks ELF interpreters and each runtime dependency closure, including
+symbol versions, and refreshes native ION outputs to avoid stale incremental
+relinking. Existing credentials and userdata are not modified by preparation.
+
+Hardware-backed key service startup and existing-data decryption require another
+phone check. Device operations are paused at the user's request. The existing
+shared recovery service domain remains permissive; global enforcing alone does
+not prove each legacy crypto service runs in a dedicated enforcing domain.

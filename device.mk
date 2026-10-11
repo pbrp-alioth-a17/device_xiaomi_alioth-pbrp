@@ -9,6 +9,8 @@ PRODUCT_PROPERTY_OVERRIDES += ro.virtual_ab.enabled=true
 # switch is honored by adbd only on an unlocked bootloader or a debug build.
 PRODUCT_PROPERTY_OVERRIDES += ro.adb.secure.recovery=false
 PRODUCT_BUILD_SUPER_PARTITION := false
+# Qualcomm 4.19 crypto blobs require ION ioctls; Android 17 defaults to a stub.
+$(call soong_config_set_bool,libion,legacy_impl,true)
 PRODUCT_PACKAGES += qcom_decrypt qcom_decrypt_fbe
 
 

@@ -21,6 +21,9 @@ on property:ro.crypto.state=encrypted && property:ro.boot.dynamic_partitions=tru
 # && property:hwservicemanager.ready=true is for Oreo+ build trees
 # hwservicemanager doesn't exist in older trees
 on property:crypto.ready=1 && property:hwservicemanager.ready=true
+    start alioth-crypto-prepare
+
+on property:alioth.crypto.ready=1 && property:crypto.ready=1 && property:hwservicemanager.ready=true
     start qseecomd
 
 on property:sys.listeners.registered=true
@@ -67,3 +70,10 @@ service keymaster-4-0-qti /system/bin/android.hardware.keymaster@4.0-service-qti
     oneshot
     seclabel u:r:recovery:s0
 
+
+service alioth-crypto-prepare /system/bin/prepare-crypto.sh
+    user root
+    group root
+    disabled
+    oneshot
+    seclabel u:r:recovery:s0
