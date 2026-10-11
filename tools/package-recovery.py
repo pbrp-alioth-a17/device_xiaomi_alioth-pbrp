@@ -184,6 +184,15 @@ if args.security_patch:
 # Stage the exact linked recovery backends before auditing the ramdisk.
 for library in ("libaosprecovery.so", "libminuitwrp.so"):
     shutil.copy2(product / "system/lib64" / library, ramdisk_target(staging / "system/lib64" / library))
+# libion's implementation is selected by the product; incremental relinking
+# must not retain the previous Android 17 stub after that selection changes.
+for libdir in ("lib", "lib64"):
+    native = product / "system" / libdir / "libion.so"
+    staged = staging / "system" / libdir / "libion.so"
+    if staged.exists():
+        if not native.is_file():
+            raise SystemExit(f"Missing native libion output: {native}")
+        shutil.copy2(native, ramdisk_target(staged))
 # The legacy relinker previously replaced the recovery variant with the
 # system libvintf. Refresh its exact native recovery build output as well.
 vintf_outputs = list((root / "out/soong/.intermediates/system/libvintf/libvintf").glob(
@@ -191,6 +200,24 @@ vintf_outputs = list((root / "out/soong/.intermediates/system/libvintf/libvintf"
 if len(vintf_outputs) != 1:
     raise SystemExit("Expected one linked arm64 recovery libvintf output; rebuild libvintf.recovery")
 shutil.copy2(vintf_outputs[0], ramdisk_target(staging / "system/lib64/libvintf.so"))
+# Native bootstrap binaries, including hwservicemanager, retain this ELF path.
+# Recovery uses the same staged Bionic linker before any installed-OS mounts.
+bootstrap = ramdisk_target(staging / "system/bin/bootstrap")
+bootstrap.mkdir(parents=True, exist_ok=True)
+for name in ("linker", "linker64"):
+    target = ramdisk_target(staging / "system/bin" / name)
+    if not target.is_file():
+        continue
+    link = bootstrap / name
+    if link.is_symlink():
+        link.unlink()
+    elif link.exists():
+        raise SystemExit(f"Unexpected bootstrap linker file: {link}")
+    link.symlink_to("../" + name)
+    legacy = ramdisk_target(staging / "sbin") / name
+    if not legacy.exists() and not legacy.is_symlink():
+        legacy.symlink_to("/system/bin/" + name)
+
 # Fail packaging if a staged executable or library lacks an ABI-matching provider.
 # Inspect staged ELF files using the checkout compiler tools, rather than install aliases.
 readelf = root / "prebuilts/clang/host/linux-x86/clang-r596125/bin/llvm-readelf"
@@ -208,39 +235,82 @@ elf_dependencies = []
 providers = set()
 exports = {}
 imports = []
+provider_paths = {}
 for candidate in staging.rglob("*"):
+    if "first_stage_ramdisk" in candidate.relative_to(staging).parts:
+        continue
     if candidate.is_symlink() or not candidate.is_file():
         continue
     with candidate.open("rb") as source:
         header = source.read(20)
     if header[:4] != b"\x7fELF":
         continue
+    program_headers = subprocess.check_output([str(readelf), "-l", str(candidate)], text=True)
+    match = re.search(r"Requesting program interpreter: ([^\]]+)", program_headers)
+    if match:
+        interpreter = match.group(1)
+        loader = ramdisk_target(staging / interpreter.lstrip("/"))
+        if not interpreter.startswith("/") or not loader.is_file() or not loader.stat().st_mode & 0o111:
+            raise SystemExit(f"Missing ELF interpreter for {candidate.relative_to(staging)}: {interpreter}")
     abi = (header[4], header[18:20])
     dynamic = subprocess.check_output([str(readelf), "-d", str(candidate)], text=True)
-    providers.add((abi, candidate.name))
+    runtime_dirs = {"system/lib", "system/lib64", "vendor/lib", "vendor/lib64",
+                    "vendor/lib/hw", "vendor/lib64/hw", "sbin"}
+    if str(candidate.parent.relative_to(staging)) in runtime_dirs:
+        providers.add((abi, candidate.name))
+        provider_paths.setdefault((abi, candidate.name), candidate)
     for soname in re.findall(r"\(SONAME\).*?\[(.*?)\]", dynamic):
-        providers.add((abi, soname))
+        if str(candidate.parent.relative_to(staging)) in runtime_dirs:
+            providers.add((abi, soname))
+            provider_paths.setdefault((abi, soname), candidate)
     elf_dependencies.append((candidate, abi, re.findall(r"\(NEEDED\).*?\[(.*?)\]", dynamic)))
     symbols = subprocess.check_output([str(readelf), "--dyn-syms", "--wide", str(candidate)], text=True)
     for line in symbols.splitlines():
         fields = line.split()
         if len(fields) < 8 or not fields[0].endswith(":"):
             continue
-        symbol = fields[7].split("@")[0]
+        symbol = fields[7].replace("@@", "@")
         if fields[6] == "UND" and fields[4] == "GLOBAL":
             imports.append((candidate, abi, symbol))
         elif fields[6] != "UND" and fields[4] in ("GLOBAL", "WEAK") and fields[5] in ("DEFAULT", "PROTECTED"):
-            exports.setdefault(abi, set()).add(symbol)
+            exports.setdefault(candidate, set()).add(symbol)
+            if "@@" in fields[7]:
+                exports[candidate].add(fields[7].split("@@")[0])
 missing = [(str(candidate.relative_to(staging)), dependency)
            for candidate, abi, dependencies in elf_dependencies
            for dependency in dependencies if (abi, dependency) not in providers]
 if missing:
     raise SystemExit(f"Missing recovery runtime library providers: {missing}")
+dependency_map = {candidate: dependencies for candidate, abi, dependencies in elf_dependencies}
+def runtime_exports(candidate, abi):
+    visited = set()
+    pending = [candidate]
+    available = set()
+    while pending:
+        current = pending.pop()
+        if current in visited:
+            continue
+        visited.add(current)
+        available.update(exports.get(current, set()))
+        for dependency in dependency_map.get(current, []):
+            provider = provider_paths.get((abi, dependency))
+            if provider is not None:
+                pending.append(provider)
+    return available
+available_exports = {(candidate, abi): runtime_exports(candidate, abi)
+                     for candidate, abi, dependencies in elf_dependencies}
 unresolved = [(str(candidate.relative_to(staging)), symbol)
               for candidate, abi, symbol in imports
-              if symbol not in exports.get(abi, set())]
+              if symbol not in available_exports[(candidate, abi)]]
+
 if unresolved:
     raise SystemExit(f"Unresolved strong recovery runtime symbols: {unresolved}")
+
+# Do not publish ramdisks left behind by an adbd-root diagnostic build.
+properties = dict(line.split("=", 1) for line in (staging / "prop.default").read_text().splitlines()
+                  if "=" in line and not line.startswith("#"))
+if properties.get("ro.secure") != "1" or properties.get("ro.debuggable") != "0":
+    raise SystemExit("Production packaging requires ro.secure=1 and ro.debuggable=0")
 
 policy = staging / "sepolicy"
 domains = set(subprocess.check_output([str(host / "sepolicy-analyze"), str(policy), "permissive"], text=True).split())
