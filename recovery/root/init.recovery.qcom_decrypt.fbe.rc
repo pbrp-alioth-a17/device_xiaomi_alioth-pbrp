@@ -1,5 +1,3 @@
-import /init.recovery.services.qcom_decrypt.fbe.rc
-
 # fscrypt v2 keys are installed by recovery vold through filesystem ioctls.
 # Android 17 no longer provides the legacy install_keyring init command.
 

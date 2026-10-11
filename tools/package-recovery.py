@@ -63,6 +63,22 @@ for source in overlay.rglob("*"):
     destination = ramdisk_target(staging / relative)
     destination.parent.mkdir(parents=True, exist_ok=True)
     shutil.copy2(source, ramdisk_target(destination))
+# The recovery overlay owns these VINTF fragment directories. Remove stale
+# declarations left by an incremental build after staging the current set.
+for relative in ("vendor/etc/vintf/manifest", "system/etc/vintf/manifest"):
+    directory = ramdisk_target(staging / relative)
+    expected_fragments = {p.name for p in (overlay / relative).glob("*.xml")}
+    for fragment in directory.glob("*.xml"):
+        if fragment.name not in expected_fragments:
+            ramdisk_target(fragment).unlink()
+
+# Validate merged recovery HAL declarations with this checkout's VINTF parser.
+for partition in ("vendor", "system"):
+    vintf = ramdisk_target(staging / partition / "etc/vintf")
+    manifests = [vintf / "manifest.xml", *sorted((vintf / "manifest").glob("*.xml"))]
+    subprocess.run([str(host / "assemble_vintf"), "-i", ":".join(map(str, manifests))],
+                   check=True, stdout=subprocess.DEVNULL)
+
 # Refresh production init resources too: a diagnostic boot may have modified
 # the staging tree without changing these build inputs.
 for source, destination in (
@@ -78,11 +94,16 @@ shutil.copy2(root / "device/qcom/twrp-common/crypto/system/bin/prepdecrypt.sh",
 # absolute symlinks. Missing daemons can otherwise leave decryption waiting.
 
 missing_services = []
+missing_imports = []
 for init_file in staging.rglob("*.rc"):
     if init_file.is_symlink() or not init_file.is_file():
         continue
     for line in init_file.read_text(errors="replace").splitlines():
         fields = line.split()
+        if len(fields) == 2 and fields[0] == "import" and "$" not in fields[1] and not init_file.name.startswith("ueventd"):
+            imported = ramdisk_target(staging / fields[1].lstrip("/"))
+            if not imported.exists():
+                missing_imports.append((str(init_file.relative_to(staging)), fields[1]))
         if len(fields) >= 3 and fields[0] == "service" and fields[2].startswith("/") and "$" not in fields[2]:
             binary = ramdisk_target(staging / fields[2].lstrip("/"))
             if not binary.is_file() or not binary.stat().st_mode & 0o111:
@@ -92,6 +113,8 @@ for init_file in staging.rglob("*.rc"):
                 shell = ramdisk_target(staging / interpreter.lstrip("/"))
                 if not interpreter.startswith("/") or not shell.is_file() or not shell.stat().st_mode & 0o111:
                     missing_services.append((str(init_file.relative_to(staging)), fields[1], interpreter))
+if missing_imports:
+    raise SystemExit(f"Missing recovery init imports: {missing_imports}")
 if missing_services:
     raise SystemExit(f"Missing or non-executable recovery service tools: {missing_services}")
 # These applets are required by the approved Boot ramdisk installer.
