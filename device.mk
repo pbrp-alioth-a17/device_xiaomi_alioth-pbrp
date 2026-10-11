@@ -5,6 +5,9 @@ PRODUCT_USE_DYNAMIC_PARTITIONS := true
 $(call inherit-product, $(SRC_TARGET_DIR)/product/virtual_ab_ota.mk)
 # Recovery prop.default must expose this even without mounting vendor.
 PRODUCT_PROPERTY_OVERRIDES += ro.virtual_ab.enabled=true
+# Recovery has no Android framework authorization dialog. The recovery-only
+# switch is honored by adbd only on an unlocked bootloader or a debug build.
+PRODUCT_PROPERTY_OVERRIDES += ro.adb.secure.recovery=false
 PRODUCT_BUILD_SUPER_PARTITION := false
 PRODUCT_PACKAGES += qcom_decrypt qcom_decrypt_fbe
 

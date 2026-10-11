@@ -1,7 +1,7 @@
 import /init.recovery.services.qcom_decrypt.fbe.rc
 
-on property:ro.crypto.state=encrypted && property:ro.crypto.type=file
-    install_keyring
+# fscrypt v2 keys are installed by recovery vold through filesystem ioctls.
+# Android 17 no longer provides the legacy install_keyring init command.
 
 on property:vendor.sys.listeners.registered=true
     start gatekeeper-1-0-qti
