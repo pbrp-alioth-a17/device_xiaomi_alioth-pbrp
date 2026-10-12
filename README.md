@@ -268,3 +268,17 @@ filenames were seen in diagnostic UI captures. No partition was flashed. The
 pre-test Original theme and 60-second timeout were restored before leaving
 recovery. Exhaustive localization, other credential types and destructive
 operations remain outside this verification.
+
+## Offline UI and portability follow-up — 2026-10-12
+
+The shared [recovery update](https://github.com/pbrp-alioth-a17/android_bootable_recovery/commit/037503712051c31bab8c93377ee7a07fc9cfb065) includes separate commits for Material layout cleanup, the missing language overlay, and portrait theme selection below 720 pixels. Android and SDK are the first aligned Device Information rows; PBRP branding remains present. Console/terminal text no longer receives menu cards. Backup, input, Settings sliders and Time Zone controls have bounded surfaces and consistent contrast.
+
+The [vold update](https://github.com/pbrp-alioth-a17/system_vold/commit/409d3d843978a357b6d0bbde1eac43ffc6b9ebea) validates serialized password records and decodes Weaver slots using the framework's big-endian five-byte format. It retains compatible old/new fields without modifying existing keys. This does not add legacy FDE or establish support for every vendor credential implementation.
+
+Offline checks: affected A17 crypto/UI modules built successfully; 105 pages and 19 templates parsed with no missing static navigation targets, missing images or unused Material images. Six portrait build-selection cases (480×800 through 1440×3120) passed. Disposable address/undefined-behavior sanitizer checks passed for credential prefixes, optional fields, zero-length Weaver handles and truncated files. These checks are not runtime device verification; no test fixtures were committed.
+
+Boot and installer packaging validators passed. New output hashes:
+- `recovery_boot.img`: SHA-256 `584bb08914fe5d270dfffc88c4992f849302d4da1e59f0db7d7fb76c839e346c`; 118009856 bytes.
+- `recovery.zip`: SHA-256 `e13a610f94355cad87f64315f0263b72102dd398804fecf4b084670f9bd1955b`; 87945275 bytes.
+
+Phone access and flashing were suspended at the user’s request before these changes. The exact new image has not been boot-tested. Other device ports, credential types and screen sizes require their own runtime checks; this update is not a universal production-readiness claim. All work for this follow-up used the standalone recovery tree and the Android 14 recovery reference, not the experimental EVO tree.
