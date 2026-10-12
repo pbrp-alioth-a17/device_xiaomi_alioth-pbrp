@@ -1,0 +1,30 @@
+[
+  {
+    "repository": "android_device_qcom_twrp-common",
+    "target_path": "device/qcom/twrp-common"
+  },
+  {
+    "repository": "TeamWin/android_device_qcom_common",
+    "target_path": "device/qcom/common"
+  },
+  {
+    "repository": "kernel_xiaomi_sm8250",
+    "target_path": "kernel/xiaomi/sm8250"
+  },
+  {
+    "repository": "external_magisk-prebuilt",
+    "target_path": "external/magisk-prebuilt"
+  },
+  {
+    "repository": "LineageOS/android_hardware_qcom_bootctrl",
+    "target_path": "hardware/qcom-caf/bootctrl"
+  },
+  {
+    "repository": "vendor_lineage",
+    "target_path": "vendor/lineage"
+  },
+  {
+    "repository": "vendor_utils",
+    "target_path": "vendor/utils"
+  }
+]

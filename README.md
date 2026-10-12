@@ -344,3 +344,22 @@ theme resources and installer payload integrity. These are offline checks;
 this revision still needs phone verification before a production release.
 
 Architecture references: [AOSP recovery images](https://source.android.com/docs/core/architecture/bootloader/recovery-images) and [AOSP FBE requirements](https://source.android.com/docs/security/features/encryption/file-based).
+
+## Recovery-only sync and device prerequisites
+
+The default manifest syncs the validated Alioth recovery build/configuration
+source set. Extra platform/device projects are declared under `notdefault`
+and are fetched only when explicitly selected. Existing full checkouts are
+not deleted by the source-selection helper.
+
+```sh
+source build/envsetup.sh
+recoverysync --check --device device/xiaomi/alioth  # offline check
+recoverysync --device device/xiaomi/alioth          # explicit dependency sync
+```
+
+For another port, sync its manifest-known device project explicitly, then use
+its `recovery.dependencies` (or existing `lineage.dependencies`) file. Each
+entry's `target_path` must match a project declared in the manifest. Unknown
+repositories require an explicit local manifest; recovery lunch/build does not
+search GitHub or fetch ROM device sources automatically.
