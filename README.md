@@ -32,7 +32,7 @@ remain unverified. Final fastboot USB driver compatibility is pending. GUI frame
 
 Use the Android 17 checkout at `~/pbrp-alioth-a17` with this tree at
 `device/xiaomi/alioth`. Android 14 build trees are not supported by this port.
-Use the [Android 17 source manifest](https://github.com/pbrp-alioth-a17/manifest). Its pinned projects contain the required changes; do not replay the old Android 14 patch series. See the [source guide](patches/README.md).
+Use the [Android 17 source manifest](https://github.com/pbrp-alioth-a17/manifest). Its tracked project branches contain the required changes; do not replay the old Android 14 patch series. See the [source guide](patches/README.md).
 The matching Android 17 kernel/DTB/DTBO are tracked in `prebuilt/`:
 `Image`, `dtbs/`, and `dtbo.img`. The build wrapper regenerates them from
 `kernel/xiaomi/sm8250` using the checkout-provided compiler before building recovery.
@@ -287,7 +287,7 @@ Phone access and flashing were suspended at the user’s request before these ch
 
 The product and recovery board includes now use the scoped
 [PBRP layer on the A17 Lineage base](https://github.com/pbrp-alioth-a17/vendor_lineage/commit/5fbcdc16658619315823b8eecdb24b91a7fc8a33).
-The old vendor/pb project is removed from the active manifest and build scan.
+The duplicate vendor project is removed from the active manifest and build scan.
 Recovery tool packages, versioning, flag namespaces, Soong defaults and
 recovery-only policy are retained; the Lineage ROM common product is not
 inherited. Current Lineage kernel/header rules, compiler selection and host
@@ -304,3 +304,43 @@ committed. The exact migrated image has not been tested on the phone; EVO and
 the device were not accessed for this migration.
 - `recovery_boot.img`: SHA-256 `469fff7d2a1d085c300d570f68057874acfe8fb8cf9a0b0ddcac4a7ee52b725c`; 118005760 bytes.
 - `recovery.zip`: SHA-256 `22ddde339f5aa80f2489d5d591a377de1e07b2f32a658990fb8896bdb2bceafb`; 87948614 bytes.
+
+## Android 17 dependency audit
+
+System Core is based on LineageOS `lineage-24.0`, with only the explicit PBRP
+recovery-boot routing and absent-kernel-attribute ENOENT fixes carried forward.
+EvolutionX property spoofing and the unused libkeyutils module are excluded.
+Qualcomm twrp-common remains required for Alioth's `qcom_decrypt` and
+`qcom_decrypt_fbe` launchers, vendor crypto HAL setup and service cleanup.
+Missing OS/patch metadata now fails closed instead of inventing crypto values.
+
+The device ZIP creator remains Info-ZIP: the file manager needs a device-side
+archive command; Android's host-side `soong_zip` is not a replacement. Folder
+archiving quotes paths and includes hidden files and empty directories.
+
+The Lineage build layer supports source kernels and `TARGET_PREBUILT_KERNEL`.
+Optional manifest groups `kernel-platform-515`, `kernel-platform-66`,
+`kernel-platform-612` and `kernel-platform-618` expose their upstream kernel
+platform dependencies. These are opt-in, not replacements for Alioth's 4.19
+kernel. A 5.15+ GKI port also requires matching device/vendor modules, boot
+layout and hardware validation. No such port is certified by this offline audit.
+FBE and metadata-encryption interfaces are retained; support for every vendor
+key format, legacy FDE, or other devices' decryption is not claimed.
+
+Alioth's `m pbrp` uses the same validated image and signed-ZIP packagers as the
+manual commands above, rather than the generic both-slot installer:
+
+```sh
+export PBRP_ROM=/path/to/matching-ROM.zip
+m -j4 pbrp
+# Or set PBRP_METADATA_BOOT to a previously matched Boot image, optionally
+# PBRP_SECURITY_PATCH=YYYY-MM when its verified patch needs updating.
+```
+
+The final dependency audit compiled Boot and Qualcomm decryption helpers,
+regenerated Alioth kernel configuration and checked its prebuilt checksums.
+Image validation covers init services, ELF dependencies, VINTF, policy,
+theme resources and installer payload integrity. These are offline checks;
+this revision still needs phone verification before a production release.
+
+Architecture references: [AOSP recovery images](https://source.android.com/docs/core/architecture/bootloader/recovery-images) and [AOSP FBE requirements](https://source.android.com/docs/security/features/encryption/file-based).

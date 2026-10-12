@@ -39,5 +39,3 @@ PRODUCT_PROPERTY_OVERRIDES += ro.pbrp.display_refresh_rate=120
 
 # Required for compressed/userspace Virtual A/B snapshot mappings.
 PRODUCT_PACKAGES += snapuserd.recovery
-# File manager ZIP creation uses the upstream PBRP archiver.
-PRODUCT_PACKAGES += zip

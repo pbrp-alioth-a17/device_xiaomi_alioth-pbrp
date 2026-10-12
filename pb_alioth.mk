@@ -8,3 +8,6 @@ PRODUCT_DEVICE := alioth
 PRODUCT_BRAND := POCO
 PRODUCT_MANUFACTURER := Xiaomi
 PRODUCT_MODEL := POCO F3
+
+# Use the metadata-aware, active-Boot-only Alioth installer.
+PBRP_PACKAGE_SCRIPT := device/xiaomi/alioth/tools/package-pbrp.sh
