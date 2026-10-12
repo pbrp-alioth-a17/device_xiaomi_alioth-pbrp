@@ -234,3 +234,37 @@ was then temporarily booted: uid 2000 ADB, ro.secure=1, ro.debuggable=0,
 Enforcing, running keystore2, mtp,adb and an empty crash buffer. The pre-test
 theme preference was restored, and no partition was flashed. This does not
 establish exhaustive page/localization coverage or destructive operation tests.
+
+
+## Material screen polish verification — 2026-10-12
+
+[UI implementation](https://github.com/pbrp-alioth-a17/android_bootable_recovery/commit/90492023e4b63473d3a44145173c3e551478fc09)
+standardizes rounded menu rows, fonts, icon bounds, toolbar navigation,
+Explorer dialog geometry, value sliders and swipe confirmations. Reboot uses
+compact grouped actions with a separate boot-slot section; Wipe guidance and
+Backup Options use consistent surfaces. About retains the original PBRP logo
+and displays Android 17 / SDK 37. Original and external theme resources remain
+separate from the optional Material renderer.
+
+[CLI connection fix](https://github.com/pbrp-alioth-a17/android_bootable_recovery/commit/0b5f53a4b292524dbf1859a6edbb75c851083091)
+passed ten consecutive requests and a stopped-listener test returning failure
+after 10.1 seconds. Long-running operation output waits remain unchanged.
+
+Affected native targets and theme generation pass; XML parses, every Material
+bitmap is referenced, and image/ZIP validators pass. RAM-staged phone captures
+covered About, Advanced, Install/Explorer, Reboot, Wipe/Advanced Wipe, Backup,
+Backup Options, Tools, General/Screen/Time Zone/Vibration/Language settings and
+the theme selector. A value-slider drag changed the timeout value; the test
+value was restored. Both themes were selected through touch. These are safe
+UI checks, not destructive wipe, restore, install or slot-change tests.
+
+Final secure Boot SHA-256: `ce16432d7123b9a339ed3af7b50d31e96f9cea69f4b3eeadedb6e635a7ac7739`.
+Final installer SHA-256: `d35462cf1809c8b205fab8f1721eba595228e5ed863dc67b28d198ee295b6315`.
+The exact secure Boot image was temporarily booted: authorized uid 2000 ADB,
+ro.secure=1, ro.debuggable=0, Enforcing, Android 17 / SDK 37, slot A, recovery
+and keystore2 running, mtp,adb configured and an empty crash buffer. Production
+shell cannot list /sdcard; this is not a new production decryption test. Readable
+filenames were seen in diagnostic UI captures. No partition was flashed. The
+pre-test Original theme and 60-second timeout were restored before leaving
+recovery. Exhaustive localization, other credential types and destructive
+operations remain outside this verification.

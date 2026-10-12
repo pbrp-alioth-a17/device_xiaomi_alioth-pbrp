@@ -11,6 +11,7 @@
 
 ## Preserve the approved implementation
 
+- Preserve PBRP branding in About in both themes. Material uses compact grouped controls and bounded dialogs; Original and external themes retain their resources. Android and SDK labels come from runtime properties.
 - UI/touch, manual brightness, RTC correction, AW8697 timed haptics and configured 120 Hz/120 FPS. No claim of measured frame pacing.
 - FBE policy v2 and the existing backup archive policy format. Recovery reads existing keys; do not rewrite credentials or upgrade stored key blobs.
 - Qualcomm Keymaster/Gatekeeper/keystore2 services and bounded service waits. Keep installed Android System outside the recovery runtime at `/system_root`.
