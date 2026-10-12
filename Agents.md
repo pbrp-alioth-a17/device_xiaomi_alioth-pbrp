@@ -5,6 +5,7 @@
 - Work in `~/pbrp-alioth-a17`; preserve the separate ROM and Android 14 recovery checkouts.
 - Publish custom projects to [pbrp-alioth-a17](https://github.com/pbrp-alioth-a17), using the pinned [manifest](https://github.com/pbrp-alioth-a17/manifest). Preserve imported authorship and separate unrelated changes.
 - Platform: Android 17, LineageOS 24; Alioth and Aliothin device identifiers.
+- PBRP uses the scoped recovery layer in `vendor/lineage`; do not restore the retired `vendor/pb` project or inherit the Lineage ROM common product for recovery. Preserve recovery flags, tools, policy and versioning while using A17 Lineage kernel/header infrastructure.
 - Use `pb_alioth-cp2a-user` and checkout-provided compilers/JDK. The kernel wrapper builds the pinned sm8250 source with Alioth configuration and stages matching Image/DTB/DTBO checksums.
 - Build Boot only. Header v3; Boot partition 201326592 bytes. Never flash the generated placeholder vendor_boot.
 - Package with matching installed-ROM OS/security-patch metadata. Keep theme equality, recovery policy, ramdisk integrity, ZIP payload and image checks enabled. Signing uses recovery-local tools and the public AOSP test key.

@@ -282,3 +282,25 @@ Boot and installer packaging validators passed. New output hashes:
 - `recovery.zip`: SHA-256 `e13a610f94355cad87f64315f0263b72102dd398804fecf4b084670f9bd1955b`; 87945275 bytes.
 
 Phone access and flashing were suspended at the user’s request before these changes. The exact new image has not been boot-tested. Other device ports, credential types and screen sizes require their own runtime checks; this update is not a universal production-readiness claim. All work for this follow-up used the standalone recovery tree and the Android 14 recovery reference, not the experimental EVO tree.
+
+## PBRP vendor migration — 2026-10-12
+
+The product and recovery board includes now use the scoped
+[PBRP layer on the A17 Lineage base](https://github.com/pbrp-alioth-a17/vendor_lineage/commit/5fbcdc16658619315823b8eecdb24b91a7fc8a33).
+The old vendor/pb project is removed from the active manifest and build scan.
+Recovery tool packages, versioning, flag namespaces, Soong defaults and
+recovery-only policy are retained; the Lineage ROM common product is not
+inherited. Current Lineage kernel/header rules, compiler selection and host
+tools replace duplicate older infrastructure. Imported source licensing and
+provenance are retained. The manifest-owned pb_build wrapper now has a real
+source and uses explicit A17 product/release/variant and image arguments.
+
+Offline preservation checks confirm unchanged recovery package lists and policy,
+and retention of all PBRP Soong flag exports and module defaults. The completed
+Alioth user Boot build passed, including recovery policy compilation. Manifest
+parsing and all copy/link source checks pass for the 1,222-project source set.
+Boot and installer packaging validation passed. No new test fixtures are
+committed. The exact migrated image has not been tested on the phone; EVO and
+the device were not accessed for this migration.
+- `recovery_boot.img`: SHA-256 `469fff7d2a1d085c300d570f68057874acfe8fb8cf9a0b0ddcac4a7ee52b725c`; 118005760 bytes.
+- `recovery.zip`: SHA-256 `22ddde339f5aa80f2489d5d591a377de1e07b2f32a658990fb8896bdb2bceafb`; 87948614 bytes.

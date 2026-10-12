@@ -84,8 +84,8 @@ $(call soong_config_set,qtidisplay,gralloc_handle_has_reserved_size,true)
 
 # Export recovery options on the Android 17 platform.
 include vendor/lineage/config/BoardConfigKernel.mk
-include vendor/pb/config/BoardConfigSoong.mk
-include vendor/pb/sepolicy/sepolicy.mk
+include vendor/lineage/config/recovery/BoardConfigSoong.mk
+include vendor/lineage/sepolicy/recovery/sepolicy.mk
 
 # PBRP supplies these scoped recovery build extensions.
 BUILD_BROKEN_PLUGIN_VALIDATION := soong-libaosprecovery_defaults soong-libguitwrp_defaults soong-libminuitwrp_defaults
